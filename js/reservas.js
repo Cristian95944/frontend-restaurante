@@ -7,7 +7,7 @@ if (userObj) {
     document.getElementById('nombre-usuario').textContent = `👤 ${userObj.nom || 'Admin'}`;
 }
 
-// Headers con token de sesión de forma global para cumplir con el requerimiento de validación [cite: 101, 245]
+// Headers con token de sesión de forma global para cumplir con el requerimiento de validación
 const headersAuth = {
     'Authorization': `Bearer ${tokenReservas}`,
     'Content-Type': 'application/json'
@@ -47,7 +47,7 @@ async function cargarMesas() {
             `;
             contenedorMesas.appendChild(div);
 
-            // Añadir al select solo si no está fuera de servicio para cumplir la validación [cite: 168]
+            // Añadir al select solo si no está fuera de servicio para cumplir la validación
             if (mesa.estado !== 'Fuera de servicio') {
                 const opt = document.createElement('option');
                 opt.value = mesa.id;
@@ -103,7 +103,7 @@ async function cargarReservas() {
     }
 }
 
-// 4. Crear Nueva Reserva con validaciones del cliente [cite: 248]
+// 4. Crear Nueva Reserva con validaciones del cliente
 document.getElementById('form-reserva').addEventListener('submit', async (e) => {
     e.preventDefault();
     
@@ -114,22 +114,23 @@ document.getElementById('form-reserva').addEventListener('submit', async (e) => 
     const hoy = new Date();
     hoy.setHours(0,0,0,0);
 
-    // Validación obligatoria en cliente: No permitir reservas pasadas [cite: 167, 248]
+    // Validación obligatoria en cliente: No permitir reservas pasadas
     if (fechaSeleccionada < hoy) {
         alertDiv.textContent = "No puedes hacer reservas en fechas pasadas.";
         alertDiv.style.display = 'block';
         return;
     }
 
+    // El objeto payload ahora envía 'telefono_cliente' coincidiendo exactamente con el Backend
     const payload = {
         nombre_cliente: document.getElementById('res-cliente').value,
-        telefono: document.getElementById('res-telefono').value,
+        telefono_cliente: document.getElementById('res-telefono').value,
         cantidad_personas: parseInt(document.getElementById('res-personas').value),
         fecha: document.getElementById('res-fecha').value,
         hora: document.getElementById('res-hora').value,
         mesa_id: document.getElementById('res-mesa').value,
         observaciones: document.getElementById('res-observaciones').value,
-        estado: 'Pendiente' // Estado inicial por defecto [cite: 162]
+        estado: 'Pendiente' // Estado inicial por defecto
     };
 
     try {
