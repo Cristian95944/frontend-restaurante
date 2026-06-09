@@ -46,7 +46,6 @@ function poblarSelectMesas() {
     listadoMesas.forEach(mesa => {
         const opt = document.createElement('option');
         opt.value = mesa.id;
-        // Mostramos el estado para que el usuario sepa si cumple el requerimiento de no estar "Disponible"
         opt.textContent = `Mesa ${mesa.numero || mesa.nombre} (${mesa.estado})`;
         select.appendChild(opt);
     });
@@ -57,13 +56,21 @@ function poblarSelectProductos() {
     const select = document.getElementById('ped-producto');
     select.innerHTML = '<option value="">-- Seleccione un Ítem --</option>';
     
-    // Filtrar solo productos con disponibilidad == 1
-    const disponibles = listadoProductos.filter(p => p.disponibilidad == 1);
+    // Evalúa disponibilidad tanto en formato numérico (1) como booleano (true)
+    const disponibles = listadoProductos.filter(p => {
+        const valorDisp = p.disponibilidad !== undefined ? p.disponibilidad : p.disponible;
+        return valorDisp == 1 || valorDisp === true || valorDisp === '1' || valorDisp === 'Disponible';
+    });
 
     disponibles.forEach(prod => {
         const opt = document.createElement('option');
         opt.value = prod.id;
-        opt.textContent = `${prod.nombre} - $${parseFloat(prod.precio).toFixed(2)}`;
+        
+        // Adaptación de los nombres de propiedades devueltos por el Backend
+        const nombreItem = prod.nombre_producto || prod.nombre || 'Producto';
+        const precioItem = prod.precio_unitario || prod.precio || 0;
+
+        opt.textContent = `${nombreItem} - $${parseFloat(precioItem).toFixed(2)}`;
         select.appendChild(opt);
     });
 }
@@ -76,7 +83,6 @@ function validarMesaSeleccionada(mesaId) {
     if (!mesaId) return;
 
     const mesa = listadoMesas.find(m => m.id == mesaId);
-    // Validación obligatoria: No permitir registrar pedidos para mesas disponibles
     if (mesa && mesa.estado === 'Disponible') {
         alertDiv.textContent = `⚠️ Validación: No se permiten pedidos para mesas en estado "Disponible". Cambia su estado en el módulo de Mesas.`;
         alertDiv.style.display = 'block';
@@ -97,7 +103,6 @@ function agregarAlCarrito() {
         return;
     }
 
-    // Validación obligatoria: No permitir cantidades menores a uno
     if (isNaN(cantidad) || cantidad < 1) {
         alertDiv.textContent = "La cantidad del producto debe ser mayor o igual a 1.";
         alertDiv.style.display = 'block';
@@ -106,6 +111,10 @@ function agregarAlCarrito() {
 
     const productoOriginal = listadoProductos.find(p => p.id == prodId);
 
+    // Adaptación de propiedades al extraer el producto seleccionado
+    const nombreItem = productoOriginal.nombre_producto || productoOriginal.nombre || 'Producto';
+    const precioItem = parseFloat(productoOriginal.precio_unitario || productoOriginal.precio || 0);
+
     // Verificar si ya existe en el carrito para sumar la cantidad
     const existeIndex = carrito.findIndex(item => item.id == prodId);
     if (existeIndex !== -1) {
@@ -113,13 +122,12 @@ function agregarAlCarrito() {
     } else {
         carrito.push({
             id: productoOriginal.id,
-            nombre: productoOriginal.nombre,
-            precio: parseFloat(productoOriginal.precio),
+            nombre: nombreItem,
+            precio: precioItem,
             cantidad: cantidad
         });
     }
 
-    // Resetear cantidad a 1 y refrescar renderizado
     document.getElementById('ped-cantidad').value = 1;
     actualizarVistaCarrito();
 }
@@ -165,10 +173,9 @@ function actualizarVistaCarrito() {
         tbody.appendChild(tr);
     });
 
-    // Inyección de cálculos requeridos de forma dinámica
     document.getElementById('total-items').textContent = acumuladoTotalItems;
     document.getElementById('subtotal-pedido').textContent = `$${acumuladoSubtotal.toFixed(2)}`;
-    document.getElementById('total-pedido').textContent = `$${acumuladoSubtotal.toFixed(2)}`; // Si manejas impuestos en el back se puede adaptar aquí
+    document.getElementById('total-pedido').textContent = `$${acumuladoSubtotal.toFixed(2)}`;
 }
 
 // 8. Confirmar y enviar la estructura completa JSON al microservicio de pedidos
@@ -184,7 +191,6 @@ async function enviarPedidoFinal() {
         return;
     }
 
-    // Doble validación estricta de la mesa
     const mesa = listadoMesas.find(m => m.id == mesaId);
     if (mesa && mesa.estado === 'Disponible') {
         alertDiv.textContent = "No está permitido crear pedidos para mesas que estén en estado 'Disponible'.";
@@ -192,23 +198,23 @@ async function enviarPedidoFinal() {
         return;
     }
 
-    // Validación obligatoria: No permitir pedidos vacíos
     if (carrito.length === 0) {
         alertDiv.textContent = "El pedido no se puede procesar porque el carrito está vacío.";
         alertDiv.style.display = 'block';
         return;
     }
 
-    // Estructura limpia requerida por el backend mapeando los ítems agregados
+  // Este objeto coincide exactamente con lo que el Backend espera (ver ms-pedidos.http)
     const payload = {
         mesa_id: parseInt(mesaId),
-        estado: 'Pendiente', // Estado inicial por defecto
-        items: carrito.map(i => ({
-            producto_id: i.id,
-            cantidad: i.cantidad
+        estado: 'Pendiente',
+        detalles: carrito.map(i => ({  // CAMBIA ESTO: de 'items' a 'detalles'
+            producto_id: parseInt(i.id),
+            nombre_producto: i.nombre, // Asegúrate de incluir el nombre si el backend lo pide
+            cantidad: parseInt(i.cantidad),
+            precio_unitario: parseFloat(i.precio)
         }))
     };
-
     try {
         const response = await fetch(`${API_PEDIDOS}/pedidos`, {
             method: 'POST',
@@ -224,7 +230,7 @@ async function enviarPedidoFinal() {
             document.getElementById('ped-mesa').value = '';
             actualizarVistaCarrito();
         } else {
-            alertDiv.textContent = data.message || "Error al registrar el pedido en el servidor.";
+            alertDiv.textContent = data.message || data.error || "Error al registrar el pedido en el servidor.";
             alertDiv.style.display = 'block';
         }
     } catch (err) {
