@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Pedidos - Restaurante</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="navbar">
+        <span class="nav-brand">Restaurante XYZ</span>
+        <div class="nav-links">
+            <a href="dashboard.html">Inicio</a>
+            <a href="reservas.html">Mesas y Reservas</a>
+            <a href="productos.html">Menú</a>
+            <a href="pedidos.html" class="active">Pedidos</a>
+            <button onclick="logout()" class="btn-logout">Salir</button>
+        </div>
+        <span id="nombre-usuario" class="user-tag">👤 Cargando...</span>
+    </div>
+
+    <div class="container">
+        <h1>Gestión de Pedidos</h1>
+        
+        <div id="pedido-alert" class="alert alert-danger" style="display: none;"></div>
+
+        <div class="dashboard-grid" style="grid-template-columns: 1fr 1.5fr; gap: 2rem;">
+            
+            <div class="card" style="text-align: left;">
+                <h3>Nuevo Pedido / Agregar Item</h3>
+                
+                <div class="form-group">
+                    <label>1. Seleccionar Mesa Ocupada/Reservada</label>
+                    <select id="ped-mesa" required onchange="validarMesaSeleccionada(this.value)">
+                        <option value="">Cargando mesas...</option>
+                    </select>
+                </div>
+
+                <hr style="border: 0; border-top: 1px solid #cbd5e1; margin: 1.5rem 0;">
+
+                <div class="form-group">
+                    <label>2. Seleccionar Producto del Menú</label>
+                    <select id="ped-producto">
+                        <option value="">Cargando productos disponibles...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Cantidad</label>
+                    <input type="number" id="ped-cantidad" value="1" min="1">
+                </div>
+
+                <button type="button" class="btn-primary" onclick="agregarAlCarrito()" style="background-color: #2563eb;">
+                    🛒 Añadir al Pedido
+                </button>
+            </div>
+
+            <div class="card" style="text-align: left;">
+                <h3>Detalle del Pedido Actual</h3>
+                
+                <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #cbd5e1; text-align: left;">
+                            <th style="padding: 0.5rem;">Producto</th>
+                            <th style="padding: 0.5rem;">Precio</th>
+                            <th style="padding: 0.5rem; text-align: center;">Cant.</th>
+                            <th style="padding: 0.5rem;">Subtotal</th>
+                            <th style="padding: 0.5rem; text-align: center;">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="carrito-cuerpo">
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 2rem; color: #94a3b8;">
+                                El carrito está vacío. Agrega productos.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 2px dashed #cbd5e1; text-align: right;">
+                    <p style="margin: 0.3rem 0;">Total Productos: <strong id="total-items">0</strong></p>
+                    <p style="margin: 0.3rem 0;">Subtotal: <strong id="subtotal-pedido">$0.00</strong></p>
+                    <p style="margin: 0.5rem 0; font-size: 1.3rem; color: #2563eb;">Total a Pagar: <strong id="total-pedido">$0.00</strong></p>
+                </div>
+
+                <button type="button" class="btn-primary" onclick="enviarPedidoFinal()" style="margin-top: 1rem;">
+                    🚀 Confirmar y Enviar Pedido
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/pedidos.js"></script>
+</body>
+</html>
