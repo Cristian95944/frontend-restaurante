@@ -1,163 +1,316 @@
-const API_RESERVAS = 'http://localhost:8002';
-const tokenReservas = verificarAuth();
+document.addEventListener('DOMContentLoaded', () => {
+    validarSesion();
+    cargarMesas();
+    cargarReservas();
 
-// Actualizar tag de usuario en navbar
-const userObj = getUsuario();
-if (userObj) {
-    document.getElementById('nombre-usuario').textContent = `👤 ${userObj.nom || 'Admin'}`;
-}
+    document.getElementById('formMesa').addEventListener('submit', guardarMesa);
+    document.getElementById('formReserva').addEventListener('submit', guardarReserva);
+    document.getElementById('btnFiltrarReservas').addEventListener('click', cargarReservas);
+});
 
-// Headers con token de sesión de forma global para cumplir con el requerimiento de validación
-const headersAuth = {
-    'Authorization': `Bearer ${tokenReservas}`,
-    'Content-Type': 'application/json'
-};
-
-// 1. Cargar Mesas y cargarlas en el Selector del Formulario
 async function cargarMesas() {
     try {
-        const response = await fetch(`${API_RESERVAS}/mesas`, { headers: headersAuth });
-        const resData = await response.json();
-        const mesas = resData.data || resData;
+        const respuesta = await apiRequest(API.reservas + '/mesas');
 
-        const contenedorMesas = document.getElementById('lista-mesas');
-        const selectMesa = document.getElementById('res-mesa');
-        
-        contenedorMesas.innerHTML = '';
-        selectMesa.innerHTML = '<option value="">Seleccione una mesa...</option>';
+        const tabla = document.getElementById('tablaMesas');
+        const selectMesa = document.getElementById('mesa_id');
 
-        mesas.forEach(mesa => {
-            // Renderizar tarjetas de mesas
-            const div = document.createElement('div');
-            div.style.padding = '1rem';
-            div.style.borderRadius = '6px';
-            div.style.border = '1px solid #cbd5e1';
-            div.style.backgroundColor = mesa.estado === 'Disponible' ? '#f0fdf4' : '#fef2f2';
-            
-            div.innerHTML = `
-                <strong>${mesa.numero || mesa.nombre}</strong><br>
-                Capacidad: ${mesa.capacidad_maxima || mesa.capacidad}<br>
-                <small>Estado: ${mesa.estado}</small><br>
-                <select onchange="cambiarEstadoMesa(${mesa.id}, this.value)" style="margin-top:0.5rem; font-size:0.8rem; padding:0.2rem;">
-                    <option value="Disponible" ${mesa.estado === 'Disponible' ? 'selected' : ''}>Disponible</option>
-                    <option value="Reservada" ${mesa.estado === 'Reservada' ? 'selected' : ''}>Reservada</option>
-                    <option value="Ocupada" ${mesa.estado === 'Ocupada' ? 'selected' : ''}>Ocupada</option>
-                    <option value="Fuera de servicio" ${mesa.estado === 'Fuera de servicio' ? 'selected' : ''}>Fuera de servicio</option>
-                </select>
+        tabla.innerHTML = '';
+        selectMesa.innerHTML = '<option value="">Seleccione mesa</option>';
+
+        respuesta.mesas.forEach(mesa => {
+            tabla.innerHTML += `
+                <tr>
+                    <td>${mesa.id}</td>
+                    <td>${mesa.numero}</td>
+                    <td>${mesa.capacidad}</td>
+                    <td>${mesa.estado}</td>
+                    <td>
+                        <button onclick="editarMesa(${mesa.id})">Editar</button>
+                        <button onclick="cambiarEstadoMesa(${mesa.id})">Cambiar estado</button>
+                    </td>
+                </tr>
             `;
-            contenedorMesas.appendChild(div);
 
-            // Añadir al select solo si no está fuera de servicio para cumplir la validación
-            if (mesa.estado !== 'Fuera de servicio') {
-                const opt = document.createElement('option');
-                opt.value = mesa.id;
-                opt.textContent = `${mesa.numero || mesa.nombre} (Cap: ${mesa.capacidad_maxima || mesa.capacidad})`;
-                selectMesa.appendChild(opt);
-            }
-        });
-    } catch (e) {
-        console.error("Error cargando mesas:", e);
-    }
-}
-
-// 2. Cambiar Estado de la Mesa desde el select dinámico
-async function cambiarEstadoMesa(id, nuevoEstado) {
-    try {
-        const response = await fetch(`${API_RESERVAS}/mesas/${id}`, {
-            method: 'PUT',
-            headers: headersAuth,
-            body: JSON.stringify({ estado: nuevoEstado })
-        });
-        if (response.ok) {
-            cargarMesas(); // Recarga la vista reflejando el cambio
-        }
-    } catch (e) {
-        console.error("Error cambiando estado de mesa:", e);
-    }
-}
-
-// 3. Listar Reservas creadas
-async function cargarReservas() {
-    try {
-        const response = await fetch(`${API_RESERVAS}/reservas`, { headers: headersAuth });
-        const resData = await response.json();
-        const reservas = resData.data || resData;
-
-        const tbody = document.getElementById('lista-reservas');
-        tbody.innerHTML = '';
-
-        reservas.forEach(res => {
-            const tr = document.createElement('tr');
-            tr.style.borderBottom = '1px solid #e2e8f0';
-            tr.innerHTML = `
-                <td style="padding: 0.5rem;">${res.nombre_cliente || res.cliente}</td>
-                <td style="padding: 0.5rem;">Mesa ${res.mesa_id}</td>
-                <td style="padding: 0.5rem;">${res.fecha} a las ${res.hora}</td>
-                <td style="padding: 0.5rem;">${res.cantidad_personas}</td>
-                <td style="padding: 0.5rem;"><span style="color: green; font-weight: bold;">${res.estado}</span></td>
+            selectMesa.innerHTML += `
+                <option value="${mesa.id}">${mesa.numero} - Capacidad ${mesa.capacidad} - ${mesa.estado}</option>
             `;
-            tbody.appendChild(tr);
         });
-    } catch (e) {
-        console.error("Error cargando reservas:", e);
+
+    } catch (error) {
+        mostrarMensaje('mensajeMesa', 'Error al cargar mesas', 'error');
     }
 }
 
-// 4. Crear Nueva Reserva con validaciones del cliente
-document.getElementById('form-reserva').addEventListener('submit', async (e) => {
+async function guardarMesa(e) {
     e.preventDefault();
-    
-    const alertDiv = document.getElementById('reserva-alert');
-    alertDiv.style.display = 'none';
 
-    const fechaSeleccionada = new Date(document.getElementById('res-fecha').value);
-    const hoy = new Date();
-    hoy.setHours(0,0,0,0);
+    const id = document.getElementById('mesaId').value;
+    const numero = document.getElementById('numeroMesa').value.trim();
+    const capacidad = Number(document.getElementById('capacidadMesa').value);
+    const estado = document.getElementById('estadoMesa').value;
 
-    // Validación obligatoria en cliente: No permitir reservas pasadas
-    if (fechaSeleccionada < hoy) {
-        alertDiv.textContent = "No puedes hacer reservas en fechas pasadas.";
-        alertDiv.style.display = 'block';
+    if (numero === '' || capacidad <= 0) {
+        mostrarMensaje('mensajeMesa', 'Complete correctamente los datos de la mesa', 'error');
         return;
     }
 
-    // El objeto payload ahora envía 'telefono_cliente' coincidiendo exactamente con el Backend
-    const payload = {
-        nombre_cliente: document.getElementById('res-cliente').value,
-        telefono_cliente: document.getElementById('res-telefono').value,
-        cantidad_personas: parseInt(document.getElementById('res-personas').value),
-        fecha: document.getElementById('res-fecha').value,
-        hora: document.getElementById('res-hora').value,
-        mesa_id: document.getElementById('res-mesa').value,
-        observaciones: document.getElementById('res-observaciones').value,
-        estado: 'Pendiente' // Estado inicial por defecto
+    const datos = {
+        numero,
+        capacidad,
+        estado
     };
 
     try {
-        const response = await fetch(`${API_RESERVAS}/reservas`, {
-            method: 'POST',
-            headers: headersAuth,
-            body: JSON.stringify(payload)
+        let respuesta;
+
+        if (id === '') {
+            respuesta = await apiRequest(API.reservas + '/mesas', 'POST', datos);
+        } else {
+            respuesta = await apiRequest(API.reservas + '/mesas/' + id, 'PUT', datos);
+        }
+
+        if (!respuesta.estado) {
+            mostrarMensaje('mensajeMesa', respuesta.mensaje, 'error');
+            return;
+        }
+
+        mostrarMensaje('mensajeMesa', respuesta.mensaje, 'success');
+        document.getElementById('formMesa').reset();
+        document.getElementById('mesaId').value = '';
+        document.getElementById('btnMesa').textContent = 'Guardar mesa';
+
+        cargarMesas();
+
+    } catch (error) {
+        mostrarMensaje('mensajeMesa', 'Error al guardar mesa', 'error');
+    }
+}
+
+async function editarMesa(id) {
+    try {
+        const respuesta = await apiRequest(API.reservas + '/mesas/' + id);
+
+        if (!respuesta.estado) {
+            mostrarMensaje('mensajeMesa', respuesta.mensaje, 'error');
+            return;
+        }
+
+        const mesa = respuesta.mesa;
+
+        document.getElementById('mesaId').value = mesa.id;
+        document.getElementById('numeroMesa').value = mesa.numero;
+        document.getElementById('capacidadMesa').value = mesa.capacidad;
+        document.getElementById('estadoMesa').value = mesa.estado;
+        document.getElementById('btnMesa').textContent = 'Actualizar mesa';
+
+    } catch (error) {
+        mostrarMensaje('mensajeMesa', 'Error al consultar mesa', 'error');
+    }
+}
+
+async function cambiarEstadoMesa(id) {
+    const estado = prompt('Nuevo estado: disponible, reservada, ocupada, fuera_servicio');
+
+    if (!estado) {
+        return;
+    }
+
+    try {
+        const respuesta = await apiRequest(API.reservas + '/mesas/' + id + '/estado', 'PUT', {
+            estado
         });
 
-        const data = await response.json();
-
-        if (response.ok) {
-            document.getElementById('form-reserva').reset();
-            cargarMesas();
-            cargarReservas();
-        } else {
-            alertDiv.textContent = data.message || "Error al registrar la reserva.";
-            alertDiv.style.display = 'block';
+        if (!respuesta.estado) {
+            mostrarMensaje('mensajeMesa', respuesta.mensaje, 'error');
+            return;
         }
-    } catch (err) {
-        alertDiv.textContent = "Error de conexión con el servidor de reservas.";
-        alertDiv.style.display = 'block';
-    }
-});
 
-// Inicializar ejecución al cargar la vista
-document.addEventListener('DOMContentLoaded', () => {
-    cargarMesas();
-    cargarReservas();
-});
+        mostrarMensaje('mensajeMesa', respuesta.mensaje, 'success');
+        cargarMesas();
+
+    } catch (error) {
+        mostrarMensaje('mensajeMesa', 'Error al cambiar estado', 'error');
+    }
+}
+
+async function cargarReservas() {
+    try {
+        const fecha = document.getElementById('filtroFecha').value;
+        const cliente = document.getElementById('filtroCliente').value.trim();
+        const estado = document.getElementById('filtroEstadoReserva').value;
+
+        let url = API.reservas + '/reservas?';
+
+        if (fecha !== '') {
+            url += 'fecha=' + fecha + '&';
+        }
+
+        if (cliente !== '') {
+            url += 'cliente=' + cliente + '&';
+        }
+
+        if (estado !== '') {
+            url += 'estado=' + estado + '&';
+        }
+
+        const respuesta = await apiRequest(url);
+
+        const tabla = document.getElementById('tablaReservas');
+        tabla.innerHTML = '';
+
+        respuesta.reservas.forEach(reserva => {
+            tabla.innerHTML += `
+                <tr>
+                    <td>${reserva.id}</td>
+                    <td>${reserva.nombre_cliente}</td>
+                    <td>${reserva.telefono_cliente}</td>
+                    <td>${reserva.cantidad_personas}</td>
+                    <td>${reserva.fecha}</td>
+                    <td>${reserva.hora}</td>
+                    <td>${reserva.mesa ? reserva.mesa.numero : reserva.mesa_id}</td>
+                    <td>${reserva.estado}</td>
+                    <td>
+                        <button onclick="editarReserva(${reserva.id})">Editar</button>
+                        <button onclick="cambiarEstadoReserva(${reserva.id})">Estado</button>
+                        <button class="danger" onclick="cancelarReserva(${reserva.id})">Cancelar</button>
+                    </td>
+                </tr>
+            `;
+        });
+
+    } catch (error) {
+        mostrarMensaje('mensajeReserva', 'Error al cargar reservas', 'error');
+    }
+}
+
+async function guardarReserva(e) {
+    e.preventDefault();
+
+    const id = document.getElementById('reservaId').value;
+
+    const datos = {
+        nombre_cliente: document.getElementById('nombreCliente').value.trim(),
+        telefono_cliente: document.getElementById('telefonoCliente').value.trim(),
+        cantidad_personas: Number(document.getElementById('cantidadPersonas').value),
+        fecha: document.getElementById('fechaReserva').value,
+        hora: document.getElementById('horaReserva').value,
+        observaciones: document.getElementById('observaciones').value.trim(),
+        estado: document.getElementById('estadoReserva').value,
+        mesa_id: Number(document.getElementById('mesa_id').value)
+    };
+
+    if (
+        datos.nombre_cliente === '' ||
+        datos.telefono_cliente === '' ||
+        datos.cantidad_personas <= 0 ||
+        datos.fecha === '' ||
+        datos.hora === '' ||
+        datos.mesa_id <= 0
+    ) {
+        mostrarMensaje('mensajeReserva', 'Complete correctamente los datos de la reserva', 'error');
+        return;
+    }
+
+    try {
+        let respuesta;
+
+        if (id === '') {
+            respuesta = await apiRequest(API.reservas + '/reservas', 'POST', datos);
+        } else {
+            respuesta = await apiRequest(API.reservas + '/reservas/' + id, 'PUT', datos);
+        }
+
+        if (!respuesta.estado) {
+            mostrarMensaje('mensajeReserva', respuesta.mensaje, 'error');
+            return;
+        }
+
+        mostrarMensaje('mensajeReserva', respuesta.mensaje, 'success');
+
+        document.getElementById('formReserva').reset();
+        document.getElementById('reservaId').value = '';
+        document.getElementById('btnReserva').textContent = 'Guardar reserva';
+
+        cargarReservas();
+        cargarMesas();
+
+    } catch (error) {
+        mostrarMensaje('mensajeReserva', 'Error al guardar reserva', 'error');
+    }
+}
+
+async function editarReserva(id) {
+    try {
+        const respuesta = await apiRequest(API.reservas + '/reservas/' + id);
+
+        if (!respuesta.estado) {
+            mostrarMensaje('mensajeReserva', respuesta.mensaje, 'error');
+            return;
+        }
+
+        const reserva = respuesta.reserva;
+
+        document.getElementById('reservaId').value = reserva.id;
+        document.getElementById('nombreCliente').value = reserva.nombre_cliente;
+        document.getElementById('telefonoCliente').value = reserva.telefono_cliente;
+        document.getElementById('cantidadPersonas').value = reserva.cantidad_personas;
+        document.getElementById('fechaReserva').value = reserva.fecha;
+        document.getElementById('horaReserva').value = reserva.hora;
+        document.getElementById('observaciones').value = reserva.observaciones ?? '';
+        document.getElementById('estadoReserva').value = reserva.estado;
+        document.getElementById('mesa_id').value = reserva.mesa_id;
+        document.getElementById('btnReserva').textContent = 'Actualizar reserva';
+
+    } catch (error) {
+        mostrarMensaje('mensajeReserva', 'Error al consultar reserva', 'error');
+    }
+}
+
+async function cambiarEstadoReserva(id) {
+    const estado = prompt('Nuevo estado: pendiente, confirmada, cancelada, finalizada');
+
+    if (!estado) {
+        return;
+    }
+
+    try {
+        const respuesta = await apiRequest(API.reservas + '/reservas/' + id + '/estado', 'PUT', {
+            estado
+        });
+
+        if (!respuesta.estado) {
+            mostrarMensaje('mensajeReserva', respuesta.mensaje, 'error');
+            return;
+        }
+
+        mostrarMensaje('mensajeReserva', respuesta.mensaje, 'success');
+        cargarReservas();
+        cargarMesas();
+
+    } catch (error) {
+        mostrarMensaje('mensajeReserva', 'Error al cambiar estado', 'error');
+    }
+}
+
+async function cancelarReserva(id) {
+    if (!confirm('¿Desea cancelar esta reserva?')) {
+        return;
+    }
+
+    try {
+        const respuesta = await apiRequest(API.reservas + '/reservas/' + id + '/cancelar', 'PUT');
+
+        if (!respuesta.estado) {
+            mostrarMensaje('mensajeReserva', respuesta.mensaje, 'error');
+            return;
+        }
+
+        mostrarMensaje('mensajeReserva', respuesta.mensaje, 'success');
+        cargarReservas();
+        cargarMesas();
+
+    } catch (error) {
+        mostrarMensaje('mensajeReserva', 'Error al cancelar reserva', 'error');
+    }
+}

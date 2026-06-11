@@ -2,87 +2,115 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Restaurante</title>
+    <title>Dashboard - Restaurante XYZ</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 
-    <nav class="navbar">
-        <h1>🍽️ Restaurante</h1>
-        <div class="navbar-menu">
-            <a href="dashboard.html" class="active">Dashboard</a>
-            <a href="reservas.html">Reservas</a>
+    <div class="layout">
+        <aside class="sidebar">
+            <h2>Restaurante XYZ</h2>
+
+            <a class="active" href="dashboard.html">Dashboard</a>
+            <a href="reservas.html">Reservas y mesas</a>
             <a href="productos.html">Productos</a>
             <a href="pedidos.html">Pedidos</a>
-        </div>
-        <div class="navbar-right">
-            <span id="nombre-usuario"></span>
-            <button class="btn btn-danger" style="width:auto;" onclick="logout()">Cerrar Sesión</button>
-        </div>
-    </nav>
 
-    <div class="main-content">
-        <h2 class="page-title">Panel Principal</h2>
+            <button onclick="cerrarSesionFrontend()">Cerrar sesión</button>
+        </aside>
 
-        <div class="stats-grid">
-            <div class="stat-card verde">
-                <div class="stat-number" id="total-mesas">-</div>
-                <div class="stat-label">Mesas</div>
+        <main class="content">
+            <div class="header">
+                <h1>Panel principal</h1>
+                <p id="infoUsuario">Cargando usuario...</p>
             </div>
-            <div class="stat-card azul">
-                <div class="stat-number" id="total-reservas">-</div>
-                <div class="stat-label">Reservas</div>
-            </div>
-            <div class="stat-card naranja">
-                <div class="stat-number" id="total-productos">-</div>
-                <div class="stat-label">Productos</div>
-            </div>
-            <div class="stat-card rojo">
-                <div class="stat-number" id="total-pedidos">-</div>
-                <div class="stat-label">Pedidos</div>
-            </div>
-        </div>
 
-        <div class="card">
-            <div class="card-title">Accesos Rápidos</div>
-            <div style="display:flex; gap:15px; flex-wrap:wrap;">
-                <a href="reservas.html"><button class="btn btn-primary" style="width:auto;">📅 Gestionar Reservas</button></a>
-                <a href="productos.html"><button class="btn btn-success" style="width:auto;">🍔 Gestionar Productos</button></a>
-                <a href="pedidos.html"><button class="btn btn-warning" style="width:auto;">📋 Gestionar Pedidos</button></a>
-            </div>
-        </div>
+            <section class="dashboard-cards">
+                <a class="dashboard-card" href="reservas.html">
+                    <h2 id="totalMesas">0</h2>
+                    <p>Mesas registradas</p>
+                </a>
+
+                <a class="dashboard-card" href="reservas.html">
+                    <h2 id="totalReservas">0</h2>
+                    <p>Reservas registradas</p>
+                </a>
+
+                <a class="dashboard-card" href="productos.html">
+                    <h2 id="totalProductos">0</h2>
+                    <p>Productos del menú</p>
+                </a>
+
+                <a class="dashboard-card" href="pedidos.html">
+                    <h2 id="totalPedidos">0</h2>
+                    <p>Pedidos registrados</p>
+                </a>
+            </section>
+
+            <section class="card">
+                <h2>Estado general del sistema</h2>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Módulo</th>
+                            <th>Microservicio</th>
+                            <th>Puerto</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Autenticación</td>
+                            <td>ms-auth</td>
+                            <td>8000</td>
+                            <td id="estadoAuth">Verificando...</td>
+                        </tr>
+                        <tr>
+                            <td>Mesas y reservas</td>
+                            <td>ms-reservas</td>
+                            <td>8002</td>
+                            <td id="estadoReservas">Verificando...</td>
+                        </tr>
+                        <tr>
+                            <td>Productos</td>
+                            <td>ms-productos</td>
+                            <td>8003</td>
+                            <td id="estadoProductos">Verificando...</td>
+                        </tr>
+                        <tr>
+                            <td>Pedidos</td>
+                            <td>ms-pedidos</td>
+                            <td>8004</td>
+                            <td id="estadoPedidos">Verificando...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="card">
+                <h2>Accesos rápidos</h2>
+
+                <div class="actions">
+                    <a href="reservas.html">
+                        <button>Gestionar reservas</button>
+                    </a>
+
+                    <a href="productos.html">
+                        <button>Gestionar productos</button>
+                    </a>
+
+                    <a href="pedidos.html">
+                        <button>Gestionar pedidos</button>
+                    </a>
+                </div>
+            </section>
+
+            <div id="mensajeDashboard" class="mensaje"></div>
+        </main>
     </div>
 
-    <script src="js/auth.js"></script>
-    <script>
-        const token = verificarAuth();
-        const usuario = getUsuario();
-        if (usuario) document.getElementById('nombre-usuario').textContent = '👤 ' + usuario.nombre;
-
-        const API_RESERVAS  = 'http://localhost:8002';
-        const API_PRODUCTOS = 'http://localhost:8003';
-        const API_PEDIDOS   = 'http://localhost:8004';
-
-        async function cargarStats() {
-            const headers = { 'Authorization': `Bearer ${token}` };
-            try {
-                const [mesas, reservas, productos, pedidos] = await Promise.all([
-                    fetch(`${API_RESERVAS}/mesas`,       { headers }).then(r => r.json()),
-                    fetch(`${API_RESERVAS}/reservas`,    { headers }).then(r => r.json()),
-                    fetch(`${API_PRODUCTOS}/productos`,  { headers }).then(r => r.json()),
-                    fetch(`${API_PEDIDOS}/pedidos`,      { headers }).then(r => r.json()),
-                ]);
-                document.getElementById('total-mesas').textContent     = mesas.data?.length    ?? mesas.length    ?? 0;
-                document.getElementById('total-reservas').textContent  = reservas.data?.length ?? reservas.length ?? 0;
-                document.getElementById('total-productos').textContent = productos.length ?? 0;
-                document.getElementById('total-pedidos').textContent   = pedidos.length   ?? 0;
-            } catch(e) {
-                console.error('Error cargando stats:', e);
-            }
-        }
-
-        cargarStats();
-    </script>
+    <script src="js/config.js"></script>
+    <script src="js/dashboard.js"></script>
 </body>
 </html>

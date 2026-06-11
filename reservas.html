@@ -2,93 +2,146 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Reservas - Restaurante</title>
+    <title>Reservas - Restaurante XYZ</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <div class="navbar">
-        <span class="nav-brand">Restaurante XYZ</span>
-        <div class="nav-links">
-            <a href="dashboard.html">Inicio</a>
-            <a href="reservas.html" class="active">Mesas y Reservas</a>
-            <a href="productos.html">Menú</a>
+
+    <div class="layout">
+        <aside class="sidebar">
+            <h2>Restaurante XYZ</h2>
+            <a href="dashboard.html">Dashboard</a>
+            <a class="active" href="reservas.html">Reservas y mesas</a>
+            <a href="productos.html">Productos</a>
             <a href="pedidos.html">Pedidos</a>
-            <button onclick="logout()" class="btn-logout">Salir</button>
-        </div>
-        <span id="nombre-usuario" class="user-tag">👤 Cargando...</span>
-    </div>
+            <button onclick="cerrarSesionFrontend()">Cerrar sesión</button>
+        </aside>
 
-    <div class="container">
-        <h1>Gestión de Mesas y Reservas</h1>
-        
-        <div class="dashboard-grid" style="grid-template-columns: 1fr 2fr; gap: 2rem;">
-            <div class="card" style="text-align: left;">
-                <h3>Crear Nueva Reserva</h3>
-                <div id="reserva-alert" class="alert alert-danger" style="display: none;"></div>
-                <form id="form-reserva">
-                    <div class="form-group">
-                        <label>Nombre del Cliente</label>
-                        <input type="text" id="res-cliente" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Teléfono</label>
-                        <input type="text" id="res-telefono" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Cantidad de Personas</label>
-                        <input type="number" id="res-personas" min="1" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Fecha</label>
-                        <input type="date" id="res-fecha" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Hora</label>
-                        <input type="time" id="res-hora" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Mesa Asignada</label>
-                        <select id="res-mesa" required>
-                            <option value="">Seleccione una mesa...</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Observaciones</label>
-                        <input type="text" id="res-observaciones">
-                    </div>
-                    <button type="submit" class="btn-primary">Registrar Reserva</button>
-                </form>
+        <main class="content">
+            <div class="header">
+                <h1>Gestión de mesas y reservas</h1>
+                <p>Administra la disponibilidad del restaurante.</p>
             </div>
 
-            <div>
-                <div class="card" style="margin-bottom: 2rem; text-align: left;">
-                    <h3>Estado de las Mesas</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem;" id="lista-mesas">
+            <div class="grid">
+                <section class="card">
+                    <h2>Registrar mesa</h2>
+
+                    <form id="formMesa">
+                        <input type="hidden" id="mesaId">
+
+                        <div class="form-grid">
+                            <input type="text" id="numeroMesa" placeholder="Número o nombre">
+                            <input type="number" id="capacidadMesa" placeholder="Capacidad">
+
+                            <select id="estadoMesa">
+                                <option value="disponible">Disponible</option>
+                                <option value="reservada">Reservada</option>
+                                <option value="ocupada">Ocupada</option>
+                                <option value="fuera_servicio">Fuera de servicio</option>
+                            </select>
                         </div>
+
+                        <div class="actions">
+                            <button type="submit" id="btnMesa">Guardar mesa</button>
+                        </div>
+                    </form>
+
+                    <div id="mensajeMesa" class="mensaje"></div>
+                </section>
+
+                <section class="card">
+                    <h2>Registrar reserva</h2>
+
+                    <form id="formReserva">
+                        <input type="hidden" id="reservaId">
+
+                        <div class="form-grid">
+                            <input type="text" id="nombreCliente" placeholder="Nombre del cliente">
+                            <input type="text" id="telefonoCliente" placeholder="Teléfono">
+                            <input type="number" id="cantidadPersonas" placeholder="Cantidad de personas">
+                            <input type="date" id="fechaReserva">
+                            <input type="time" id="horaReserva">
+
+                            <select id="mesa_id">
+                                <option value="">Seleccione mesa</option>
+                            </select>
+
+                            <select id="estadoReserva">
+                                <option value="pendiente">Pendiente</option>
+                                <option value="confirmada">Confirmada</option>
+                                <option value="cancelada">Cancelada</option>
+                                <option value="finalizada">Finalizada</option>
+                            </select>
+
+                            <textarea class="full" id="observaciones" placeholder="Observaciones"></textarea>
+                        </div>
+
+                        <div class="actions">
+                            <button type="submit" id="btnReserva">Guardar reserva</button>
+                        </div>
+                    </form>
+
+                    <div id="mensajeReserva" class="mensaje"></div>
+                </section>
+            </div>
+
+            <section class="card">
+                <h2>Mesas</h2>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Número</th>
+                            <th>Capacidad</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaMesas"></tbody>
+                </table>
+            </section>
+
+            <section class="card">
+                <h2>Reservas</h2>
+
+                <div class="form-grid">
+                    <input type="date" id="filtroFecha">
+                    <input type="text" id="filtroCliente" placeholder="Buscar cliente">
+
+                    <select id="filtroEstadoReserva">
+                        <option value="">Todos los estados</option>
+                        <option value="pendiente">Pendiente</option>
+                        <option value="confirmada">Confirmada</option>
+                        <option value="cancelada">Cancelada</option>
+                        <option value="finalizada">Finalizada</option>
+                    </select>
+
+                    <button type="button" id="btnFiltrarReservas">Filtrar</button>
                 </div>
 
-                <div class="card" style="text-align: left;">
-                    <h3>Listado de Reservas</h3>
-                    <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
-                        <thead>
-                            <tr style="border-bottom: 2px solid #cbd5e1; text-align: left;">
-                                <th style="padding: 0.5rem;">Cliente</th>
-                                <th style="padding: 0.5rem;">Mesa</th>
-                                <th style="padding: 0.5rem;">Fecha/Hora</th>
-                                <th style="padding: 0.5rem;">Pers.</th>
-                                <th style="padding: 0.5rem;">Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody id="lista-reservas">
-                            </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Cliente</th>
+                            <th>Teléfono</th>
+                            <th>Personas</th>
+                            <th>Fecha</th>
+                            <th>Hora</th>
+                            <th>Mesa</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaReservas"></tbody>
+                </table>
+            </section>
+        </main>
     </div>
 
-    <script src="js/auth.js"></script>
+    <script src="js/config.js"></script>
     <script src="js/reservas.js"></script>
 </body>
 </html>

@@ -2,33 +2,29 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Restaurante</title>
+    <title>Login - Restaurante XYZ</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
-<body class="login-page">
+<body class="login-body">
 
-    <div class="login-container">
-        <div class="login-box">
-            <h1>🍽️ Restaurante</h1>
-            <h2>Iniciar Sesión</h2>
+    <div class="login-card">
+        <h1>Restaurante XYZ</h1>
+        <p>Sistema de reservas y pedidos</p>
 
-            <div id="error-msg" class="alert alert-error" style="display:none;"></div>
+        <form id="formLogin">
+            <input type="text" id="usuario" placeholder="Usuario o correo">
+            <br><br>
 
-            <div class="form-group">
-                <label>Usuario</label>
-                <input type="text" id="usuario" placeholder="Ingresa tu usuario" />
-            </div>
+            <input type="password" id="contrasena" placeholder="Contraseña">
+            <br><br>
 
-            <div class="form-group">
-                <label>Contraseña</label>
-                <input type="password" id="contrasena" placeholder="Ingresa tu contraseña" />
-            </div>
+            <button type="submit">Iniciar sesión</button>
+        </form>
 
-            <button id="btn-login" onclick="login()">Iniciar Sesión</button>
-        </div>
+        <div id="mensajeLogin" class="mensaje"></div>
     </div>
 
+    <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
 </body>
 </html>

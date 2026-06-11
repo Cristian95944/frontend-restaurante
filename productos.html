@@ -2,89 +2,121 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Menú - Restaurante</title>
+    <title>Productos - Restaurante XYZ</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <div class="navbar">
-        <span class="nav-brand">Restaurante XYZ</span>
-        <div class="nav-links">
-            <a href="dashboard.html">Inicio</a>
-            <a href="reservas.html">Mesas y Reservas</a>
-            <a href="productos.html" class="active">Menú</a>
-            <a href="pedidos.html">Pedidos</a>
-            <button onclick="logout()" class="btn-logout">Salir</button>
-        </div>
-        <span id="nombre-usuario" class="user-tag">👤 Cargando...</span>
-    </div>
 
-    <div class="container">
-        <h1>Gestión del Menú (Productos)</h1>
-        
-        <div class="dashboard-grid" style="grid-template-columns: 1fr 2fr; gap: 2rem;">
-            <div class="card" style="text-align: left;">
-                <h3>Añadir al Menú</h3>
-                <div id="producto-alert" class="alert alert-danger" style="display: none;"></div>
-                <form id="form-producto">
-                    <div class="form-group">
-                        <label>Nombre del Producto</label>
-                        <input type="text" id="prod-nombre" required placeholder="Ej: Hamburguesa con queso">
-                    </div>
-                    <div class="form-group">
-                        <label>Categoría</label>
-                     <select id="prod-categoria" required>
-                    <option value="1">Entradas</option>
-                    <option value="3">Platos fuertes</option>
-                    <option value="4">Postres</option>
-                    <option value="2">Bebidas</option>
-                </select>
-                        </div>
-                    <div class="form-group">
-                        <label>Precio</label>
-                        <input type="number" id="prod-precio" step="0.01" min="0.01" required placeholder="0.00">
-                    </div>
-                    <div class="form-group">
-                        <label>Disponibilidad</label>
-                        <select id="prod-disponible" required>
-                            <option value="1">Disponible</option>
-                            <option value="0">Agotado</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn-primary">Guardar Producto</button>
-                </form>
+    <div class="layout">
+        <aside class="sidebar">
+            <h2>Restaurante XYZ</h2>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="reservas.html">Reservas y mesas</a>
+            <a class="active" href="productos.html">Productos</a>
+            <a href="pedidos.html">Pedidos</a>
+            <button onclick="cerrarSesionFrontend()">Cerrar sesión</button>
+        </aside>
+
+        <main class="content">
+            <div class="header">
+                <h1>Gestión de productos</h1>
+                <p>Administración del menú del restaurante.</p>
             </div>
 
-            <div class="card" style="text-align: left;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                    <h3>Productos Registrados</h3>
-                    <select id="filtro-categoria" onchange="filtrarProductos(this.value)" style="padding: 0.4rem; border-radius: 4px;">
-                        <option value="Todos">Mostrar Todas las Categorías</option>
-                        <option value="Entradas">Entradas</option>
-                        <option value="Platos fuertes">Platos fuertes</option>
-                        <option value="Postres">Postres</option>
-                        <option value="Bebidas">Bebidas</option>
-                    </select>
-                </div>
-                
-                <table style="width: 100%; border-collapse: collapse;">
+            <div class="grid">
+                <section class="card">
+                    <h2>Categorías</h2>
+
+                    <form id="formCategoria">
+                        <input type="text" id="nombreCategoria" placeholder="Nombre de categoría">
+                        <br><br>
+                        <textarea id="descripcionCategoria" placeholder="Descripción"></textarea>
+                        <br><br>
+                        <button type="submit">Guardar categoría</button>
+                    </form>
+
+                    <div id="mensajeCategoria" class="mensaje"></div>
+                </section>
+
+                <section class="card">
+                    <h2>Producto</h2>
+
+                    <form id="formProducto">
+                        <input type="hidden" id="producto_id">
+
+                        <div class="form-grid">
+                            <input type="text" id="nombreProducto" placeholder="Nombre del producto">
+                            <input type="number" id="precioProducto" placeholder="Precio">
+
+                            <select id="categoria_id">
+                                <option value="">Seleccione categoría</option>
+                            </select>
+
+                            <select id="disponibleProducto">
+                                <option value="true">Disponible</option>
+                                <option value="false">No disponible</option>
+                            </select>
+
+                            <textarea class="full" id="descripcionProducto" placeholder="Descripción"></textarea>
+                        </div>
+
+                        <div class="actions">
+                            <button type="submit" id="btnProducto">Guardar producto</button>
+                        </div>
+                    </form>
+
+                    <div id="mensajeProducto" class="mensaje"></div>
+                </section>
+            </div>
+
+            <section class="card">
+                <h2>Listado de categorías</h2>
+
+                <table>
                     <thead>
-                        <tr style="border-bottom: 2px solid #cbd5e1; text-align: left;">
-                            <th style="padding: 0.5rem;">Nombre</th>
-                            <th style="padding: 0.5rem;">Categoría</th>
-                            <th style="padding: 0.5rem;">Precio</th>
-                            <th style="padding: 0.5rem;">Estado</th>
-                            <th style="padding: 0.5rem; text-align: center;">Acciones</th>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Descripción</th>
                         </tr>
                     </thead>
-                    <tbody id="tabla-productos">
-                        </tbody>
+                    <tbody id="tablaCategorias"></tbody>
                 </table>
-            </div>
-        </div>
+            </section>
+
+            <section class="card">
+                <h2>Listado de productos</h2>
+
+                <div class="form-grid">
+                    <select id="filtroCategoria">
+                        <option value="">Todas las categorías</option>
+                    </select>
+
+                    <select id="filtroDisponible">
+                        <option value="">Todos</option>
+                        <option value="true">Disponibles</option>
+                        <option value="false">No disponibles</option>
+                    </select>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Producto</th>
+                            <th>Categoría</th>
+                            <th>Precio</th>
+                            <th>Disponibilidad</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaProductos"></tbody>
+                </table>
+            </section>
+        </main>
     </div>
 
-    <script src="js/auth.js"></script>
+    <script src="js/config.js"></script>
     <script src="js/productos.js"></script>
 </body>
 </html>

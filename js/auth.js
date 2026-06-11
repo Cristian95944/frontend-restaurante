@@ -1,85 +1,43 @@
-const API_AUTH = 'http://localhost:8001';
+document.addEventListener('DOMContentLoaded', () => {
+    const formulario = document.getElementById('formLogin');
 
-async function login() {
-    const usuario = document.getElementById('usuario').value.trim();
-    const contrasena = document.getElementById('contrasena').value.trim();
-    const errorMsg = document.getElementById('error-msg');
-    const btn = document.getElementById('btn-login');
-
-    if (!usuario || !contrasena) {
-        mostrarError('Por favor ingresa usuario y contraseña');
+    if (!formulario) {
         return;
     }
 
-    btn.disabled = true;
-    btn.textContent = 'Ingresando...';
+    formulario.addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-    try {
-        const response = await fetch(`${API_AUTH}/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ usuario, contrasena })
-        });
+        const usuario = document.getElementById('usuario').value.trim();
+        const contrasena = document.getElementById('contrasena').value.trim();
 
-        const data = await response.json();
-
-        if (data.success) {
-            localStorage.setItem('token', data.data.token);
-            localStorage.setItem('usuario', JSON.stringify(data.data.usuario));
-            window.location.href = 'dashboard.html';
-        } else {
-            mostrarError(data.message || 'Credenciales incorrectas');
+        if (usuario === '' || contrasena === '') {
+            mostrarMensaje('mensajeLogin', 'Debe ingresar usuario y contraseña', 'error');
+            return;
         }
-    } catch (error) {
-        mostrarError('Error al conectar con el servidor');
-    } finally {
-        btn.disabled = false;
-        btn.textContent = 'Iniciar Sesión';
-    }
-}
 
-function mostrarError(mensaje) {
-    const errorMsg = document.getElementById('error-msg');
-    errorMsg.textContent = mensaje;
-    errorMsg.style.display = 'block';
-}
+        try {
+            const respuesta = await apiRequest(API.auth + '/login', 'POST', {
+                usuario: usuario,
+                contrasena: contrasena
+            });
 
-function logout() {
-    const token = localStorage.getItem('token');
-    if (token) {
-        fetch(`${API_AUTH}/auth/logout`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+            if (!respuesta.estado) {
+                mostrarMensaje('mensajeLogin', respuesta.mensaje, 'error');
+                return;
             }
-        });
-    }
-    localStorage.removeItem('token');
-    localStorage.removeItem('usuario');
-    window.location.href = 'login.html';
-}
 
-function verificarAuth() {
-    const token = localStorage.getItem('token');
-    if (!token) {
-        window.location.href = 'login.html';
-        return null;
-    }
-    return token;
-}
+            guardarToken(respuesta.token);
+            guardarUsuario(respuesta.usuario);
 
-function getUsuario() {
-    const usuario = localStorage.getItem('usuario');
-    return usuario ? JSON.parse(usuario) : null;
-}
+            mostrarMensaje('mensajeLogin', 'Inicio de sesión correcto', 'success');
 
-// Presionar Enter para login
-document.addEventListener('DOMContentLoaded', () => {
-    const inputs = document.querySelectorAll('input');
-    inputs.forEach(input => {
-        input.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') login();
-        });
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 800);
+
+        } catch (error) {
+            mostrarMensaje('mensajeLogin', 'Error al conectar con ms-auth', 'error');
+        }
     });
 });
