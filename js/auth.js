@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const formulario = document.getElementById('formLogin');
 
     if (!formulario) {
+        console.error('No se encontró el formulario formLogin');
         return;
     }
 
@@ -25,11 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Respuesta de ms-auth:', respuesta);
 
             if (!respuesta.estado) {
-                mostrarMensaje(
-                    'mensajeLogin',
-                    respuesta.mensaje || 'Usuario o contraseña incorrectos',
-                    'error'
-                );
+                mostrarMensaje('mensajeLogin', respuesta.mensaje || 'Credenciales incorrectas', 'error');
                 return;
             }
 
@@ -40,10 +37,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             setTimeout(() => {
                 window.location.href = 'dashboard.html';
-            }, 800);
+            }, 700);
 
         } catch (error) {
-            console.error('Error en login:', error);
+            console.error('Error real del login:', error);
             mostrarMensaje('mensajeLogin', 'Error al conectar con ms-auth', 'error');
         }
     });

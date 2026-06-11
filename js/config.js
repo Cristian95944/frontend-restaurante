@@ -60,7 +60,7 @@ async function apiRequest(url, metodo = 'GET', datos = null) {
     try {
         return JSON.parse(texto);
     } catch (error) {
-        console.error('Respuesta no válida:', texto);
+        console.error('Respuesta del servidor:', texto);
         throw new Error('El servidor no devolvió JSON válido');
     }
 }

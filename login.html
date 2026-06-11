@@ -12,16 +12,30 @@
         <p>Sistema de reservas y pedidos</p>
 
         <form id="formLogin">
-            <input type="text" id="usuario" placeholder="Usuario o correo">
-            <br><br>
+            <input 
+                type="text" 
+                id="usuario" 
+                placeholder="Usuario o correo"
+                autocomplete="username"
+            >
 
-            <input type="password" id="contrasena" placeholder="Contraseña">
-            <br><br>
+            <input 
+                type="password" 
+                id="contrasena" 
+                placeholder="Contraseña"
+                autocomplete="current-password"
+            >
 
             <button type="submit">Iniciar sesión</button>
         </form>
 
         <div id="mensajeLogin" class="mensaje"></div>
+
+        <div class="usuarios-prueba">
+            <strong>Usuarios de prueba:</strong>
+            <p>admin / admin123</p>
+            <p>empleado / empleado123</p>
+        </div>
     </div>
 
     <script src="js/config.js"></script>
