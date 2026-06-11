@@ -13,12 +13,6 @@ function obtenerToken() {
     return localStorage.getItem('token');
 }
 
-function eliminarSesion() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('usuario');
-    window.location.href = 'login.html';
-}
-
 function guardarUsuario(usuario) {
     localStorage.setItem('usuario', JSON.stringify(usuario));
 }
@@ -26,6 +20,12 @@ function guardarUsuario(usuario) {
 function obtenerUsuario() {
     const usuario = localStorage.getItem('usuario');
     return usuario ? JSON.parse(usuario) : null;
+}
+
+function eliminarSesion() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('usuario');
+    window.location.href = 'login.html';
 }
 
 function validarSesion() {
@@ -55,9 +55,14 @@ async function apiRequest(url, metodo = 'GET', datos = null) {
     }
 
     const respuesta = await fetch(url, opciones);
-    const resultado = await respuesta.json();
+    const texto = await respuesta.text();
 
-    return resultado;
+    try {
+        return JSON.parse(texto);
+    } catch (error) {
+        console.error('Respuesta no válida:', texto);
+        throw new Error('El servidor no devolvió JSON válido');
+    }
 }
 
 function mostrarMensaje(id, mensaje, tipo = 'info') {
@@ -69,11 +74,6 @@ function mostrarMensaje(id, mensaje, tipo = 'info') {
 
     contenedor.textContent = mensaje;
     contenedor.className = 'mensaje ' + tipo;
-
-    setTimeout(() => {
-        contenedor.textContent = '';
-        contenedor.className = 'mensaje';
-    }, 4000);
 }
 
 function cerrarSesionFrontend() {

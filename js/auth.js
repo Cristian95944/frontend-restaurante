@@ -22,8 +22,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 contrasena: contrasena
             });
 
+            console.log('Respuesta de ms-auth:', respuesta);
+
             if (!respuesta.estado) {
-                mostrarMensaje('mensajeLogin', respuesta.mensaje, 'error');
+                mostrarMensaje(
+                    'mensajeLogin',
+                    respuesta.mensaje || 'Usuario o contraseña incorrectos',
+                    'error'
+                );
                 return;
             }
 
@@ -37,6 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 800);
 
         } catch (error) {
+            console.error('Error en login:', error);
             mostrarMensaje('mensajeLogin', 'Error al conectar con ms-auth', 'error');
         }
     });
