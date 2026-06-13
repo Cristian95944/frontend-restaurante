@@ -47,10 +47,10 @@ async function cargarProductosPedido() {
         selectDetalle.innerHTML = '<option value="">Seleccione producto</option>';
 
         productosDisponibles.forEach(producto => {
-            const texto = '${producto.nombre} - $${Number(producto.precio).toLocaleString()}';
+            const texto = `${producto.nombre} - $${Number(producto.precio).toLocaleString()}`;
 
-            selectProducto.innerHTML += <option value="${producto.id}">${texto}</option>;
-            selectDetalle.innerHTML += <option value="${producto.id}">${texto}</option>;
+            selectProducto.innerHTML += `<option value="${producto.id}">${texto}</option>`;
+            selectDetalle.innerHTML += `<option value="${producto.id}">${texto}</option>`;
         });
 
     } catch (error) {
@@ -160,168 +160,7 @@ async function crearPedido(e) {
         mostrarMensaje('mensajePedido', 'Error al crear pedido', 'error');
     }
 }
-let productosDisponibles = [];
-let productosPedido = [];
 
-document.addEventListener('DOMContentLoaded', () => {
-    validarSesion();
-
-    cargarMesasPedido();
-    cargarProductosPedido();
-    cargarPedidos();
-
-    document.getElementById('formPedido').addEventListener('submit', crearPedido);
-    document.getElementById('btnAgregarProducto').addEventListener('click', agregarProductoTemporal);
-    document.getElementById('btnFiltrarPedidos').addEventListener('click', cargarPedidos);
-    document.getElementById('formDetallePedido').addEventListener('submit', agregarDetallePedido);
-});
-
-async function cargarMesasPedido() {
-    try {
-        const respuesta = await apiRequest(API.reservas + '/mesas');
-
-        const selectMesa = document.getElementById('mesaPedido');
-        selectMesa.innerHTML = '<option value="">Seleccione mesa</option>';
-
-        respuesta.mesas.forEach(mesa => {
-            selectMesa.innerHTML += `
-                <option value="${mesa.id}" data-estado="${mesa.estado}">
-                    ${mesa.numero} - ${mesa.estado}
-                </option>
-            `;
-        });
-
-    } catch (error) {
-        mostrarMensaje('mensajePedido', 'Error al cargar mesas desde ms-reservas', 'error');
-    }
-}
-
-async function cargarProductosPedido() {
-    try {
-        const respuesta = await apiRequest(API.productos + '/productos?disponible=true');
-
-        productosDisponibles = respuesta.productos;
-
-        const selectProducto = document.getElementById('productoPedido');
-        const selectDetalle = document.getElementById('productoDetalle');
-
-        selectProducto.innerHTML = '<option value="">Seleccione producto</option>';
-        selectDetalle.innerHTML = '<option value="">Seleccione producto</option>';
-
-        productosDisponibles.forEach(producto => {
-            const texto = '${producto.nombre} - $${Number(producto.precio).toLocaleString()}';
-
-            selectProducto.innerHTML += <option value="${producto.id}">${texto}</option>;
-            selectDetalle.innerHTML += <option value="${producto.id}">${texto}</option>;
-        });
-
-    } catch (error) {
-        mostrarMensaje('mensajePedido', 'Error al cargar productos desde ms-productos', 'error');
-    }
-}
-
-function agregarProductoTemporal() {
-    const productoId = Number(document.getElementById('productoPedido').value);
-    const cantidad = Number(document.getElementById('cantidadProducto').value);
-
-    if (productoId <= 0 || cantidad <= 0) {
-        mostrarMensaje('mensajePedido', 'Seleccione un producto y una cantidad válida', 'error');
-        return;
-    }
-
-    const producto = productosDisponibles.find(item => Number(item.id) === productoId);
-
-    if (!producto) {
-        mostrarMensaje('mensajePedido', 'Producto no encontrado', 'error');
-        return;
-    }
-
-    productosPedido.push({
-        producto_id: producto.id,
-        nombre_producto: producto.nombre,
-        cantidad: cantidad,
-        precio_unitario: Number(producto.precio)
-    });
-
-    renderizarProductosTemporales();
-
-    document.getElementById('productoPedido').value = '';
-    document.getElementById('cantidadProducto').value = 1;
-}
-
-function renderizarProductosTemporales() {
-    const tabla = document.getElementById('tablaProductosPedido');
-    tabla.innerHTML = '';
-
-    let total = 0;
-
-    productosPedido.forEach((item, index) => {
-        const subtotal = item.cantidad * item.precio_unitario;
-        total += subtotal;
-
-        tabla.innerHTML += `
-            <tr>
-                <td>${item.nombre_producto}</td>
-                <td>${item.cantidad}</td>
-                <td>$${item.precio_unitario.toLocaleString()}</td>
-                <td>$${subtotal.toLocaleString()}</td>
-                <td>
-                    <button class="danger" onclick="quitarProductoTemporal(${index})">Quitar</button>
-                </td>
-            </tr>
-        `;
-    });
-
-    document.getElementById('totalTemporal').textContent = '$' + total.toLocaleString();
-}
-
-function quitarProductoTemporal(index) {
-    productosPedido.splice(index, 1);
-    renderizarProductosTemporales();
-}
-
-async function crearPedido(e) {
-    e.preventDefault();
-
-    const selectMesa = document.getElementById('mesaPedido');
-    const mesaId = Number(selectMesa.value);
-    const estadoMesa = selectMesa.options[selectMesa.selectedIndex]?.dataset.estado || '';
-
-    if (mesaId <= 0) {
-        mostrarMensaje('mensajePedido', 'Debe seleccionar una mesa', 'error');
-        return;
-    }
-
-    if (productosPedido.length === 0) {
-        mostrarMensaje('mensajePedido', 'Debe agregar al menos un producto', 'error');
-        return;
-    }
-
-    try {
-        const respuesta = await apiRequest(API.pedidos + '/pedidos', 'POST', {
-            mesa_id: mesaId,
-            estado_mesa: estadoMesa,
-            productos: productosPedido
-        });
-
-        if (!respuesta.estado) {
-            mostrarMensaje('mensajePedido', respuesta.mensaje, 'error');
-            return;
-        }
-
-        mostrarMensaje('mensajePedido', respuesta.mensaje, 'success');
-
-        productosPedido = [];
-        renderizarProductosTemporales();
-
-        document.getElementById('formPedido').reset();
-
-        cargarPedidos();
-
-    } catch (error) {
-        mostrarMensaje('mensajePedido', 'Error al crear pedido', 'error');
-    }
-}
 async function cargarPedidos() {
     try {
         const estado = document.getElementById('filtroEstadoPedido').value;
@@ -535,3 +374,4 @@ async function eliminarDetalle(detalleId) {
         mostrarMensaje('mensajePedido', 'Error al eliminar detalle', 'error');
     }
 }
+
